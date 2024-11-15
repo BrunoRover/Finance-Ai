@@ -1,74 +1,47 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Navbar from "../_components/navbar";
-import SummaryCards from "./_componentes/summary-cards";
-import TimeSelect from "./_componentes/time-select";
+import SummaryCards from "./_components/summary-cards";
+import TimeSelect from "./_components/time-select";
 import { isMatch } from "date-fns";
+import TransactionsPieChart from "./_components/transactions-pie-chart";
+import { getDashboard } from "../_data/get-dashboard";
 
-const Home = async ({
-  searchParams: { month },
-}: {
-  searchParams: { month?: string };
-}) => {
+interface HomeProps {
+  searchParams: {
+    month: string;
+  };
+}
+
+const Home = async ({ searchParams: { month } }: HomeProps) => {
   const { userId } = await auth();
   if (!userId) {
     redirect("/login");
   }
-
-  const currentMonth = new Date().getMonth() + 1;
-  const selectedMonth = month ?? String(currentMonth).padStart(2, "0");
-
   const monthIsInvalid = !month || !isMatch(month, "MM");
   if (monthIsInvalid) {
     redirect("?month=01");
   }
-
+  const dashboard = await getDashboard(month);
   return (
-    <div>
+    <>
       <Navbar />
       <div className="space-y-6 p-6">
         <div className="flex justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <TimeSelect />
         </div>
-        <SummaryCards month={selectedMonth} />
-      </div>
-    </div>
-  );
-};
-
-export default Home;
-
-/*
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import Navbar from "../_components/navbar";
-import SummaryCards from "./_componentes/summary-cards";
-import TimeSelect from "./_componentes/time-select";
-
-const Home = async ({ searchParams: { month } }: { searchParams: { month?: string } }) => {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect("/login");
-  }
-
-  // Define um valor padrão para `month` como o mês atual caso esteja undefined
-  const currentMonth = new Date().getMonth() + 1;
-  const selectedMonth = month ?? String(currentMonth).padStart(2, "0");
-
-  return (
-    <div>
-      <Navbar />
-      <div className="space-y-6 p-6">
-        <div className="flex justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <TimeSelect />
+        <div className="grid grid-cols-[2fr,1fr]">
+          <div className="flex flex-col gap-6">
+            <SummaryCards month={month} {...dashboard} />
+            <div className="grid grid-cols-3 grid-rows-1 gap-6">
+              <TransactionsPieChart {...dashboard} />
+            </div>
+          </div>
         </div>
-        <SummaryCards month={selectedMonth} />
       </div>
-    </div>
+    </>
   );
 };
 
 export default Home;
-*/
